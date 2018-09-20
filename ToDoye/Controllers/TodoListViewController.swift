@@ -10,16 +10,32 @@ import UIKit
 
 class TodoyeListViewController: UITableViewController {
     
-    var itemArray = ["Find the Fresh Milk", "Buy The Fresh Mil", "Drink Fresh Milk in the Everyday Morning"]
+    var itemArray = [Item]()
     
-    let defaults = UserDefaults.standard
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if let items = defaults.array(forKey: "ToDoListArray") as? [String] {
-            itemArray = items
-        }
+        
+        print(dataFilePath!)
+        
+        let newItem = Item()
+        newItem.title = "Find Milk"
+        itemArray.append(newItem)
+        
+        let newItem2 = Item()
+        newItem2.title = "Find Milk"
+        itemArray.append(newItem2)
+        
+        let newItem3 = Item()
+        newItem3.title = "Find Milk"
+        itemArray.append(newItem3)
+        
+      //  if let items = defaults.array(forKey: "ToDoListArray") as? [String] {
+       //     itemArray = items
+       // }
    
     }
     
@@ -30,9 +46,14 @@ class TodoyeListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
         
-        cell.textLabel?.text = itemArray[indexPath.row]
+        let item = itemArray[indexPath.row]
+        
+        cell.textLabel?.text = item.title
+        
+        cell.accessoryType = item.done ? .checkmark : .none
         
         return cell
     }
@@ -42,12 +63,9 @@ class TodoyeListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
        // print(itemArray[indexPath.row])
      
-        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        } else {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        }
-        
+        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        saveItems()
+    
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
@@ -57,16 +75,17 @@ class TodoyeListViewController: UITableViewController {
         
         var textField = UITextField()
         
-        let alert = UIAlertController(title: "Add New Todoye Iteem", message: "", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Add New Todoye Item", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             // What will happen when click on add item button on our UIAlert
             
-            self.itemArray.append(textField.text!)
-         
-            self.defaults.setValue(self.itemArray, forKey: "ToDoListArry")
+            let newItem = Item()
+            newItem.title = textField.text!
             
-          self.tableView.reloadData()
+            self.itemArray.append(newItem)
+         
+         self.saveItems()
         }
         
         alert.addTextField { (alertTextField) in
@@ -78,6 +97,21 @@ class TodoyeListViewController: UITableViewController {
         alert.addAction(action)
         
         present(alert, animated: true, completion: nil)
+    }
+    
+    // MARK - Model Manupulation Methods
+    
+    func saveItems() {
+        let encoda = PropertyListEncoder()
+        do {
+            let data = try encoda.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        } catch {
+            print("Error encoding item array, \(error)")
+            
+        }
+        
+        self.tableView.reloadData()
     }
     
 }
